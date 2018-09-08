@@ -43,7 +43,7 @@
     <footer @click="open('https://github.com/czytelny')">
       Crafted with
       <Icon type="ios-heart"></Icon>
-      by Michal Chwedczuk
+      by Michal Testes
     </footer>
 
     <input style="display: none;"
@@ -70,22 +70,14 @@
 <script>
   import boardsRepository from '@/repositories/boardsRepository'
   import settingsRepository from '@/repositories/settingsRepository'
-  import Board from './board/Board'
-  import MoveToBoardModal from './modals/MoveToBoardModal'
-  import NewBoardModal from './modals/NewBoardModal.vue'
-  import SettingsModal from './modals/settings/SettingsModal'
+  
   import axios from 'axios'
   import {mapActions} from 'vuex'
 
   const version = require('electron').remote.app.getVersion()
 
   export default {
-    components: {
-      SettingsModal,
-      NewBoardModal,
-      Board,
-      MoveToBoardModal
-    },
+    components: {},
     name: 'landing-page',
     data () {
       return {

@@ -17,8 +17,7 @@
   }
 
   @mixin overlay($offset: 0) {
-    position: absolute;
-  
+    position: absolute;  
     bottom: $offset;
     left: $offset;
     right: $offset;

@@ -2,6 +2,9 @@
   <div v-bar>
     <div id="app">
       <top-bar></top-bar>
+      <transition name="slide-left" mode="out-in">
+        <app-drawer v-if="drawerOpen"/>
+      </transition>
       <landing-page></landing-page>
       <restart-required-cloak></restart-required-cloak>
       <update-modal></update-modal>
@@ -12,7 +15,7 @@
 </template>
 
 <script>
-  
+  import appDrawer from '@/components/drawer/Drawer'
   import LandingPage from '@/components/LandingPage'
   import appNotification from '@/components/notification/Notification'
   import appNotificationWin from '@/components/notification/Notification-win'
@@ -24,6 +27,7 @@
   export default {
     name: 'backlog',
     components: {
+      appDrawer,
       appNotification,
       appNotificationWin,
       UpdateModal,
@@ -32,6 +36,9 @@
       LandingPage
     },
     computed: {
+      drawerOpen () {
+        return this.$store.getters.drawerOpen
+      },
       notifications () {
         return this.$store.getters.notifications
       },

@@ -1,4 +1,13 @@
 <template>
+  <nav class="Titlebar">
+    <!-- Menu -->
+    <div class="Icon-wrapper Icon-wrapper--titlebar Icon-wrapper--single" style="position: absolute;" @click="toggleDrawer">
+      <div class="Menu-wrapper" :class="drawerOpen ? 'is-collapsed' : ''">
+        <div class="Menu-line"></div>
+        <div class="Menu-line"></div>
+      </div>
+    </div>
+
   <div class="topBar">
     Backlog v{{version}}
     <div class="actionBtn-container">
@@ -12,6 +21,7 @@
       </div>
     </div>
   </div>
+</nav>
 </template>
 
 <script>
@@ -22,9 +32,15 @@
     computed: {
       version () {
         return this.$store.state.modals.settings.currentVersion
+      },
+      drawerOpen () {
+        return this.$store.getters.drawerOpen
       }
     },
     methods: {
+      toggleDrawer () {
+        this.$store.dispatch('toggleDrawer')
+      },
       closeApp () {
         remote.app.quit()
       },
@@ -82,4 +98,50 @@
     color: #c5281b;
   }
 
+  .Menu-line {
+    background-color: #858C99;
+    display: inline-block;
+    transition: all .3s ease;
+    width: 20px;
+    height: 2px;
+    & :last-child {
+      width: 10px;
+    }
+  }
+
+  .Menu-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 80%;
+    & .is-collapsed {
+      & .Menu-line:first-child {
+        transform: rotate(-45deg);
+        width: 12px;
+      }
+      & .Menu-line:last-child {
+        transform: rotate(45deg);
+        width: 12px;
+      }
+    }
+  }
+  
+  .Titlebar {
+    letter-spacing: .05em;
+    margin-bottom: 18px;
+    position: relative;
+    text-align: center;
+    height: 25px;
+    -webkit-app-region: drag;
+  }
+
+  .Icon-wrapper--titlebar {
+    -webkit-app-region: no-drag;
+    & :hover .Menu-line {
+      background-color: #FF4E4D;
+    }
+    & :hover .Icon--close line, & :hover .Icon--minimize line {
+      stroke: #FF4E4D;
+    }
+  }
 </style>
