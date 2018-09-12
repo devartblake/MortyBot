@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Cookies from 'js-cookie'
 
 import './styles/normalize.css'
+
 import Element from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import '@/styles/index.scss' // global css
@@ -12,9 +13,10 @@ import 'iview/dist/styles/iview.css'
 import App from './App'
 import router from './router'
 import store from './store'
-
 import Vuebar from 'vuebar'
 import VueShortkey from 'vue-shortkey'
+
+import './icons'  // icon
 
 import './permission' // permission control
 
@@ -56,8 +58,8 @@ Vue.directive('focus', {
 
 /* eslint-disable no-new */
 new Vue({
-  components: {App},
-  template: '<App/>',
+  el: '#app',
   router,
-  store
-}).$mount('#app')
+  store,
+  render: h => h(App)
+})

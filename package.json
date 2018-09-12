@@ -28,7 +28,8 @@
     "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
     "postinstall": "npm run lint:fix",
     "e2e": "npm run pack && mocha test/e2e",
-    "e2e:raw": "mocha test/e2e"
+    "e2e:raw": "mocha test/e2e",
+    "server": "node server/index.js"
   },
   "dependencies": {
     "animate.css": "^3.7.0",
@@ -48,6 +49,8 @@
     "nprogress": "^0.2.0",
     "shortid": "^2.2.12",
     "sillyname": "^0.1.0",
+    "three": "^0.96.0",
+    "uuid-token-generator": "^1.0.0",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",

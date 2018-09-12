@@ -1,248 +1,137 @@
 <template>
-  <div id="wrapper" :class="{'fixedTabs' : settings.stickBoardsOnTop}">
-    <Row style="height: 100%;">
-      <Col span="24" style="height: 100%;" >
-        <Tabs v-model="activeBoard"
-              type="card"
-              @on-click="saveActiveBoard"
-              @dblclick.native="handleDblClick"
-              :class="{'fixedTabs' : settings.stickBoardsOnTop}"
-        >
-          <Tab-pane v-for="board in boards"
-                    :label="boardTabLabel(board.label, board.id)"
-                    :name="board.id"
-                    :key="board.id"
-          >
-            <board :board="board"/>
-          </Tab-pane>
-          <div slot="extra">
-            <Tooltip content="Add new board" placement="bottom-end" :transfer="true" :delay="500">
-              <Button type="dashed"
-                      id="add-new-board-btn"
-                      @click="showNewBoardModal"
-                      size="small"
-                      icon="plus"
-                      shape="circle"
-                      style="margin-right: 5px;">
-              </Button>
-            </Tooltip>
-            <Tooltip content="Settings" placement="bottom-end" :transfer="true" :delay="500">
-              <Button type="dashed"
-                      @click="showSettingsModal"
-                      size="small"
-                      icon="gear-a"
-                      shape="circle"
-                      style="margin-right: 12px; margin-top:2px;">
-              </Button>
-            </Tooltip>
-          </div>
-        </Tabs>
-      </Col>
-    </Row>
-
-    <footer @click="open('https://github.com/czytelny')">
-      Crafted with
-      <Icon type="ios-heart"></Icon>
-      by Michal Testes
-    </footer>
-
-    <input style="display: none;"
-           id="inputForSettingsShortcut"
-           v-shortkey="{win:['ctrl', ','], win2: ['alt' + ','], mac:['meta', ',']}" @shortkey="showSettingsModal">
-    <input style="display: none;"
-           id="inputForCreateNewBorad"
-           v-shortkey="{win:['ctrl', 'shift', 'n'], win2: ['alt', 'shift', 'n'], mac:['meta', 'shift', 'n']}"
-           @shortkey="showNewBoardModal">
-    <input style="display: none;"
-           id="inputForActivateNextTab"
-           v-shortkey="{win: ['ctrl', 'shift', '}'], win2:['alt', 'shift', '}'], mac:['meta', 'shift', '}']}"
-           @shortkey="activateNextTab">
-    <input style="display: none;"
-           id="inputForActivatePrevTab"
-           v-shortkey="{win: ['ctrl', 'shift', '{'], win2:['alt', 'shift', '{'], mac:['meta', 'shift', '{']}"
-           @shortkey="activatePreviousTab">
-    <new-board-modal @newBoardSubmitted="loadBoards"></new-board-modal>
-    <settings-modal></settings-modal>
-    <move-to-board-modal></move-to-board-modal>
+  <div id="wrapper" :class="classObj">
+    <top-bar></top-bar>
+      <transition name="slide-left" mode="out-in">
+        <app-drawer v-if="drawerOpen"/>
+      </transition>
+      <landing-page></landing-page>
+      <restart-required-cloak></restart-required-cloak>
+      <update-modal></update-modal>
+      <app-notification-win v-if="os === 'win32' && notifications"/>
+      <app-notification v-else-if="os !== 'win32' && notifications"/>
   </div>
 </template>
 
 <script>
-  import boardsRepository from '@/repositories/boardsRepository'
+  import appDrawer from '@/components/drawer/Drawer'
+  import LandingPage from '@/components/LandingPage'
+  import appNotification from '@/components/notification/Notification'
+  import appNotificationWin from '@/components/notification/Notification-win'
   import settingsRepository from '@/repositories/settingsRepository'
-  
-  import axios from 'axios'
-  import {mapActions} from 'vuex'
-
-  const version = require('electron').remote.app.getVersion()
+  import RestartRequiredCloak from '@/components/RestartRequiredCloak'
+  import TopBar from '@/components/TopBar'
+  import UpdateModal from '@/components/modals/UpdateModal'
 
   export default {
-    components: {},
-    name: 'landing-page',
-    data () {
-      return {
-        newItem: '',
-        boardTabLabel: (boardLabel, boardId) => (h) => {
-          const closer = this.isLastBoard ? '' : h('Icon', {
-            'class': {'close-icon': true},
-            props: {type: 'ios-close-empty'},
-            nativeOn: {
-              click: (event) => {
-                event.stopPropagation()
-                this.handleBoardRemove(boardLabel, boardId)
-              }
-            }
-          })
-          return h('div', [
-            h('span', boardLabel),
-            closer
-          ])
-        }
-      }
+    name: 'backlog',
+    components: {
+      appDrawer,
+      appNotification,
+      appNotificationWin,
+      UpdateModal,
+      TopBar,
+      RestartRequiredCloak,
+      LandingPage
     },
     computed: {
-      isLastBoard () {
-        return this.boards.length === 1
+      drawerOpen () {
+        return this.$store.getters.drawerOpen
       },
-      boards () {
-        return this.$store.state.boards.boardsList
+      notifications () {
+        return this.$store.getters.notifications
       },
-      activeBoard: {
-        set (value) {
-          this.$store.dispatch('setActiveBoard', value)
-        },
-        get () {
-          return this.$store.state.boards.activeBoard
-        }
-      },
-      settings () {
-        return this.$store.state.settings
+      os () {
+        return process.platform
       }
     },
-    methods: {
-      ...mapActions([
-        'showNewBoardModal',
-        'hideNewBoardModal',
-        'showSettingsModal'
-      ]),
-      handleDblClick (event) {
-        if (event.target.className === 'ivu-tabs-nav-scroll') {
-          this.showNewBoardModal()
-        }
-      },
-      open (link) {
-        this.$electron.shell.openExternal(link)
-      },
-      activateNextTab () {
-        const activeTabDOM = document.querySelector('.ivu-tabs-tab-active')
-        if (activeTabDOM.nextSibling && activeTabDOM.nextSibling.className === 'ivu-tabs-tab') {
-          activeTabDOM.nextSibling.click()
-        }
-      },
-      activatePreviousTab () {
-        const activeTabDOM = document.querySelector('.ivu-tabs-tab-active')
-        if (activeTabDOM.previousSibling && activeTabDOM.previousSibling.className === 'ivu-tabs-tab') {
-          activeTabDOM.previousSibling.click()
-        }
-      },
-      handleBoardRemove (boardLabel, boardId) {
-        this.$Modal.confirm({
-          title: `Remove board '${boardLabel}' ?`,
-          okText: 'OK, remove it',
-          cancelText: 'Cancel',
-          content: `<p>You are going to remove board <strong>"${boardLabel}"</strong></p>
-                    <p>All items will be deleted, are you sure ?</p>`,
-          onOk: () => {
-            boardsRepository.removeBoard(boardId)
-            this.activeBoard = boardsRepository.getFirstBoard().id
-            this.loadBoards()
-            this.$Message.info('Board removed')
-          }
-        })
-      },
-      saveActiveBoard (boardId) {
-        this.activeBoard = boardId
-      },
-      loadBoards () {
-        this.$store.dispatch('fetchBoards')
-      },
-      importOldEntries () {
-        if (!this.settings.wasImported) {
-          boardsRepository.importOldEntries()
-          settingsRepository.updateAppSettings({'wasImported': true})
-        }
-      },
-      versionCheck () {
-        axios.get('https://api.github.com/repos/czytelny/backlog/releases/latest')
-          .then(({data}) => {
-            if (`v${version}` !== data.tag_name) {
-              this.$store.dispatch('showUpdateModal')
-            }
-          })
+    data () {
+      return {
+        settings: null
       }
     },
     created () {
-      this.$store.dispatch('fetchSettings')
-      this.versionCheck()
-      this.importOldEntries()
-      this.loadBoards()
-      this.$store.dispatch('fetchActiveBoard')
-      this.$nextTick().then(() => this.$bus.$emit('appInit', this.selectedTab))
+      this.settings = settingsRepository.getAppSettings()
+      if (this.settings.darkTheme) {
+        document.querySelector('body').classList.add('darkTheme')
+      }
     }
   }
 </script>
 
-<style>
+<style lang="scss">
+  @import url('https://fonts.googleapis.com/css?family=Roboto');
+  @import url('~animate.css');
+  @import '@/assets/darkTheme.scss';
+  @import '@/styles/index.scss'; // global css
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-  #wrapper {
+  html {
+    border: 1px solid rgba(90, 99, 118, 0.13);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Droid Sans, Helvetica Neue, sans-serif;
     height: 100vh;
-    width: 100vw;
+    background-color: #ffffff;
+    padding: 10px 0;
+    margin-top: 30px;
+    overflow: hidden;
+
+    #app {
+      overflow: auto;
+      height: 90vh!important;
+      padding-right: 8px;
+    }
   }
 
-  #wrapper.fixedTabs {
-    margin-top: 35px;
+  .vb > .vb-dragger {
+    z-index: 5;
+    width: 8px;
+    right: 0;
   }
 
-  div.fixedTabs .ivu-tabs-bar {
-    position: fixed;
-    top: 37px;
-    z-index: 100;
-    background-color: #fff;
-    width: 98vw;
-    box-shadow: 0 0 0 6px #ffffff;
-    left: 7px;
+  .vb > .vb-dragger > .vb-dragger-styler {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: rotate3d(0,0,0,0);
+    transform: rotate3d(0,0,0,0);
+    -webkit-transition:
+      background-color 100ms ease-out,
+      margin 100ms ease-out,
+      height 100ms ease-out;
+    transition:
+      background-color 100ms ease-out,
+      margin 100ms ease-out,
+      height 100ms ease-out;
+    background-color: rgba(73, 73, 73, 0.05);
+    margin: 5px 5px 5px 0;
+    border-radius: 20px;
+    height: calc(100% - 10px);
+    display: block;
   }
 
-  .ivu-tabs-tab-active .close-icon {
-    opacity: 1;
+  .vb.vb-scrolling-phantom > .vb-dragger > .vb-dragger-styler {
+    background-color: rgba(73, 73, 73, 0.3);
   }
 
-  .ivu-tabs-tab:hover .close-icon {
-    display: inline-block;
-    opacity: 1;
+  .vb > .vb-dragger:hover > .vb-dragger-styler {
+    background-color: rgba(73, 73, 73, 0.5);
+    margin: 0px;
+    height: 100%;
   }
 
-  .close-icon {
-    opacity: 0;
-    transition: opacity .3s;
-    position: absolute;
-    padding-left: 3px;
+  .vb.vb-dragging > .vb-dragger > .vb-dragger-styler {
+    background-color: rgba(73, 73, 73, 0.5);
+    margin: 0px;
+    height: 100%;
   }
 
-  footer {
-    position: fixed;
-    bottom: 0;
-    background-color: #5a6376;
-    color: white;
-    text-align: center;
-    width: 100%;
-    cursor: pointer;
-    opacity: .4;
-    height: 5%;
-    font-size: 14px;
-  }
-
-  .ivu-tabs-bar {
-    user-select: none;
+  .vb.vb-dragging-phantom > .vb-dragger > .vb-dragger-styler {
+    background-color: rgba(73, 73, 73, 0.5);
   }
 </style>
