@@ -1,7 +1,7 @@
 "use strict";
 
 let TokenGenerator = require("uuid-token-generator");
-let tokgen = new TokenGenerator(256, TokenGenerator.BASE62);
+let tokgen = new TokenGenerator(256, TokenGenerator.BASE66);
 
 /**
  * Generate token/keys

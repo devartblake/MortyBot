@@ -12,6 +12,7 @@ const Multispinner = require('multispinner')
 const buildConfig = require('./build.config')
 const mainConfig = require('./webpack.main.config')
 const rendererConfig = require('./webpack.renderer.config')
+const serverConfig = require('./webpack.server.config')
 const webConfig = require('./webpack.web.config')
 
 const doneLog = chalk.bgGreen.white(' DONE ') + ' '
@@ -65,6 +66,16 @@ function build () {
   }).catch(err => {
     m.error('renderer')
     console.log(`\n  ${errorLog}failed to build renderer process`)
+    console.error(`\n${err}\n`)
+    process.exit(1)
+  })
+
+  pack(serverConfig).then(result => {
+    results += result + '\n\n'
+    m.success('main')
+  }).catch(err => {
+    m.error('main')
+    console.log(`\n ${errorLog}failed to build server process`)
     console.error(`\n${err}\n`)
     process.exit(1)
   })
